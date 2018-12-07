@@ -25,6 +25,7 @@ void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_
 tuple_t* getTupleByID(char search_id[VAR_NAME_SIZE]);
 char* getTupleID(tuple_t* tuple_ptr);
 void saveAllTuples(char path[]);
+void showTuple(tuple_t* tuple_ptr);
 
 tuple_t *tuples;
 int tuples_size = 0;
@@ -45,11 +46,13 @@ int main() {
     createTuple("test_2", &test_2, 2);
     joinTuple("test", getTupleByID("test_2"), getTupleByID("test_1"));
 
-    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    showTuple(getTupleByID("test"));
 
-    deleteTuple("test_2");
-    deleteTuple("test_1");
-    deleteTuple("test");
+    // saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+
+    // deleteTuple("test_2");
+    // deleteTuple("test_1");
+    // deleteTuple("test");
 
     return 0;
 }
@@ -173,6 +176,49 @@ void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_
     }
 
     createTuple(id, joinedData, dimS0);
+}
+
+void showTuple(tuple_t* tuple_ptr){
+
+    if (tuple_ptr != NULL){
+
+        switch(tuple_ptr->data.type){
+            case i: printf("(%d,", tuple_ptr->data.val.i);
+                break;
+
+            case f: printf("(%f,", tuple_ptr->data.val.f);
+                break;
+
+            case c: printf("('%c',", tuple_ptr->data.val.c);
+                break;
+        }
+
+        int last = tuple_ptr->next - 1;
+
+        for (int j = 1; j < last; j++){
+            switch((tuple_ptr + j)->data.type){
+                case i: printf(" %d,", (tuple_ptr + j)->data.val.i);
+                    break;
+
+                case f: printf(" %f,", (tuple_ptr + j)->data.val.f);
+                    break;
+
+                case c: printf(" '%c',", (tuple_ptr + j)->data.val.c);
+                    break;
+            }
+        }
+
+        switch((tuple_ptr + last)->data.type){
+            case i: printf(" %d)", (tuple_ptr + last)->data.val.i);
+                break;
+
+            case f: printf(" %f)", (tuple_ptr + last)->data.val.f);
+                break;
+
+            case c: printf(" '%c')", (tuple_ptr + last)->data.val.c);
+                break;
+        }
+    }
 }
 
 void saveAllTuples(char path[]){
