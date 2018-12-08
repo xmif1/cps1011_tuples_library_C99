@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #define VAR_NAME_SIZE 64 // based on the ISO C Standard for naming variables
 
@@ -25,6 +26,7 @@ void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_
 tuple_t* getTupleByID(char search_id[VAR_NAME_SIZE]);
 char* getTupleID(tuple_t* tuple_ptr);
 void saveAllTuples(char path[]);
+void loadAllTuples(char path[]);
 void showTuple(tuple_t* tuple_ptr);
 
 tuple_t *tuples;
@@ -42,17 +44,19 @@ int main() {
     tagged_union test_1[2] = {{.type = i, .val.i = 10}, {.type = c, .val.c = 'T'}};
     tagged_union test_2[2] = {{.type = i, .val.i = 2}, {.type = c, .val.c = 'X'}};
 
-    createTuple("test_1", &test_1, 2);
-    createTuple("test_2", &test_2, 2);
-    joinTuple("test", getTupleByID("test_2"), getTupleByID("test_1"));
+    createTuple("abc", &test_1, 2);
+    createTuple("efg", &test_2, 2);
+    joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
 
-    showTuple(getTupleByID("test"));
+    // showTuple(getTupleByID("test"));
 
-    // saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
 
-    // deleteTuple("test_2");
-    // deleteTuple("test_1");
-    // deleteTuple("test");
+    deleteTuple("efg");
+    deleteTuple("abc");
+    deleteTuple("xyz");
+
+    loadAllTuples("/Users/xandrumifsud/Desktop/test.txt");
 
     return 0;
 }
@@ -243,4 +247,91 @@ void saveAllTuples(char path[]){
     }
 
     fclose(fp);
+}
+
+void loadAllTuples(char path[]){
+
+    int new_line_size = 128, tuple_size = 0, tuple_size_temp = 0, current_size = 0;
+
+    char tuple_id[VAR_NAME_SIZE];
+    char format;
+    int need_not_realloc;
+
+    char *new_line;
+    char *data;
+    char *conversion_ptr;
+    tagged_union *read_store;
+
+    new_line = (char*)malloc(new_line_size * sizeof(char));
+    data = (char*)malloc(new_line_size * sizeof(char));
+    read_store = (tagged_union*)malloc(0);
+
+    FILE *fp;
+    fp = fopen(path, "r");
+
+    if(fp != NULL){
+        while(!feof(fp)){
+            need_not_realloc = 0;
+
+            fgets(new_line, new_line_size, fp);
+
+            for(int j = new_line_size - 1; j >= 0; j--){
+                if (new_line[j] == '\n'){
+                    fseek(fp, -j-1, SEEK_CUR);
+                    fscanf(fp,"%s %d %c %s\n", tuple_id, &tuple_size_temp, &format, data);
+
+                    if(tuple_size_temp >= current_size){
+                        tuple_size = tuple_size_temp;
+                        read_store = (tagged_union*)realloc(read_store, tuple_size * sizeof(tagged_union));
+                    }
+
+                    current_size = tuple_size_temp;
+                    int k = tuple_size - current_size;
+
+                    // to add error codes
+                    switch(format){
+                        case 'i': read_store[k].type = i;
+                            long fetch_int = strtol(data, &conversion_ptr, 10);
+                            if (fetch_int <= INT_MAX && fetch_int >= INT_MIN){
+                                read_store[k].val.i = strtol(data, &conversion_ptr, 10);
+                            }
+                            break;
+
+                        case 'f': read_store[k].type = f;
+                            read_store[k].val.f = strtof(data, &conversion_ptr);
+                            break;
+
+                        case 'c': read_store[k].type = c;
+                            if(data[1] == '\0'){
+                                read_store[k].val.c = data[0];
+                            }
+                            break;
+
+                        default: break; //add error code
+                    }
+
+                    if(current_size == 1){
+                        createTuple(tuple_id, read_store, tuple_size);
+                    }
+
+                    need_not_realloc = 1;
+                    break;
+                }
+            }
+
+            if (need_not_realloc == 0){
+                fseek(fp, 1 - new_line_size, SEEK_CUR);
+
+                new_line_size *= 2;
+                new_line = (char*)realloc(new_line, new_line_size * sizeof(char));
+                data = (char*)realloc(data, new_line_size * sizeof(char));
+            }
+        }
+    }
+
+    fclose(fp);
+
+    free(new_line);
+    free(data);
+    free(read_store);
 }
