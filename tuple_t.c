@@ -38,7 +38,7 @@ void createTuple(char id[VAR_NAME_SIZE], tagged_union in[], int dimS0){
 
     // Ensure unique tuple id by means of the getTupleByID() function
     if(getTupleByID(id) != NULL){
-        printf("TUPLE_CREATE_ERROR: Tuple ID %s already registered in stack.", id);
+        printf("TUPLE_CREATE_ERROR: Tuple ID %s already registered in stack.\n", id);
     }
     else{
         tuples = realloc(tuples, (tuples_size + dimS0) * sizeof(tuple_t)); // adjust size to hold new tuple data
@@ -52,7 +52,7 @@ void createTuple(char id[VAR_NAME_SIZE], tagged_union in[], int dimS0){
             }
 
             // store int increment such that the next tuple in line is accessed from current pointer location
-            tuples[j].next = dimS0 - j + tuples_size;
+            tuples[j].next = dimS0 + tuples_size - j;
 
             // assigning of type and values to tagged_union within tuple_t
             switch(in[j - tuples_size].type){
@@ -102,7 +102,8 @@ tuple_t* getTupleByID(char search_id[VAR_NAME_SIZE]) {
         if (dimS0_in != dimS0_stack) {
             j += tuples[j].next - 1;
             continue; // if lengths are not equal, then definitely strings are not equal; thus point to start of next tuple
-        } else {
+        }
+        else {
             for (k = 0; k < dimS0_in; k++) {
                 if (search_id[k] == tuples[j].id[k])
                     match_count++;
@@ -138,7 +139,7 @@ void deleteTuple(char id[VAR_NAME_SIZE]){
     tuple_t* tuple_ptr = getTupleByID(id);
 
     if(tuple_ptr == NULL){
-        printf("TUPLE_DELETE_ERROR: Tuple ID %s not found and thus deletion cannot be performed.", id);
+        printf("TUPLE_DELETE_ERROR: Tuple ID %s not found and thus deletion cannot be performed.\n", id);
     }
     else{
         int size = tuple_ptr->next; // since getTupleByID() returns a pointer to the first element, .next is equal to size
@@ -176,7 +177,7 @@ void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_
         createTuple(id, joinedData, dimS0); // create new tuple by explicit call to createTuple
     }
     else{
-        printf("TUPLE_JOIN_ERROR: At least one of the tuple pointers specified is NULL.");
+        printf("TUPLE_JOIN_ERROR: At least one of the tuple pointers specified is NULL.\n");
     }
 }
 
@@ -228,7 +229,7 @@ void showTuple(tuple_t* tuple_ptr){
         } // default case not necessary since .type specifies an enum format
     }
     else{
-        printf("TUPLE_SHOW_ERROR: Tuple pointer specified is NULL.");
+        printf("TUPLE_SHOW_ERROR: Tuple pointer specified is NULL.\n");
     }
 }
 
@@ -318,7 +319,7 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.i = strtol(data, &conversion_ptr, 10);
                             } // check to see if return long int is in fact in int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (int range out of bounds).");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -334,7 +335,7 @@ void loadAllTuples(char path[]){
                             }
                             break;
 
-                        default: printf("TUPLE_LOAD_ERROR: Specified type %c not recognised by library.", format);
+                        default: printf("TUPLE_LOAD_ERROR: Specified type %c not recognised by library.\n", format);
                             saveAllTuples("tuple_load_error_SAVE.txt");
                             exit(EXIT_FAILURE); // graceful close
                     }
@@ -372,7 +373,7 @@ void loadAllTuples(char path[]){
 void ptr_alloc_valid(void *ptr) {
 
     if (ptr == NULL) {
-        puts("TUPLE_ALLOCATION_FAILURE: Memory allocation failed for array during either initial malloc or subsequent realloc.");
+        puts("TUPLE_ALLOCATION_FAILURE: Memory allocation failed for array during either initial malloc or subsequent realloc.\n");
         exit(EXIT_FAILURE);
     }
 
