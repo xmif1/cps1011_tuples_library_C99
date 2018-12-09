@@ -1,0 +1,478 @@
+% !TeX TXS-program:compile = txs:///pdflatex/[--shell-escape]
+
+\documentclass[10pt, a4paper, oneside]{memoir}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{pdfpages}
+\usepackage{hyperref}
+\usepackage{minted}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{appendix}
+
+\usepackage[sc]{mathpazo}
+\linespread{1.05}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\setlength{\parindent}{0in}
+
+\renewcommand\thesection{\arabic{section}}
+\setcounter{secnumdepth}{2}
+
+\makeatletter
+\newcommand*{\toccontents}{\@starttoc{toc}}
+\makeatother
+
+\makechapterstyle{box}{
+	\renewcommand*{\printchaptername}{}
+	\renewcommand*{\printchapternum}{
+		\flushleft
+		\begin{tikzpicture}
+		\draw[fill,color=black] (0,0) rectangle (2cm,2cm);
+		\draw[color=white] (1cm,1cm) node { \chapnumfont\thechapter };
+		\end{tikzpicture}
+	}
+	\renewcommand*{\printchaptertitle}[1]{\flushleft\chaptitlefont##1}
+}
+\chapterstyle{box}
+
+\begin{document}
+	
+	\begin{center}
+		
+		\includegraphics[width=0.3\textwidth]{/Users/xandrumifsud/Documents/UM_Logo.png}
+		
+		\LARGE CPS1011 -- Programming Principles (in C)
+		
+		\vspace{2mm}
+		
+		\large Assignment for the Academic Year 2018/19
+		
+		\vspace{0.5cm}
+		
+		\normalsize Xandru Mifsud
+	\end{center}
+
+	\noindent\rule[0.5ex]{\linewidth}{1pt}
+	
+	\toccontents
+	
+	\vspace*{\fill}
+	\textsc{Typeset on \today \ using \LaTeX \ and some patience.}
+	
+	\newpage
+	
+	\chapter{\mintinline{C}{tuples_t} Library}
+	
+	A simple library to make the notion of tuples available in C99 is implemented, providing some similar functionality to that provided in Python. We begin with a walk through of some design considerations, followed by the functional specification of each of the implemented functions.
+	
+	\section{Design Considerations}
+	
+	\subsection{Format Specification}
+	
+	The library is to handle a variety of data types, thus for this reason a \textit{tagged union}\footnote{\href{https://en.wikipedia.org/wiki/Tagged_union}{https://en.wikipedia.org/wiki/Tagged\_union}} structure was chosen as the means of format specification for data input to a tuple. A simple example of such a structure is provided below,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{C}
+typedef struct{
+	enum{i, f, c} type;
+	
+	union{
+		int i;
+		float f;
+		char c;
+	} val;
+} tagged_union;
+\end{minted}
+
+	Each data type is associated with a tag, allowing easy association between data and type during format specification. For example, an array of such tagged unions takes the form,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{C}
+tagged_union example[2] = {{.type = i, .val.i = 10}, {.type = c, .val.c = 'T'}};
+\end{minted}
+
+\newpage
+
+The decision was then taken to specify a \mintinline{C}{tuple_t} structure,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{C}
+#define VAR_NAME_SIZE 64 // based on the ISO C Standard for naming variables
+
+typedef struct{
+	char id[VAR_NAME_SIZE];
+	int next;
+	tagged_union data;
+} tuple_t;
+\end{minted}
+	where the tuple identifier size was chosen to be fixed at the standard variable identifier size used in ISO C99. The data part of a tuple must thus be specified using a tagged\_union, as defined above. The integer \mintinline{c}{int next} specifies a shift in a \mintinline{c}{tuple_t} pointer such that it points to the first element of the next tuple in line. Logic for the population of this variable is decided by the library.\\
+
+	Thus upon tuple creation, a user must specify the following:
+	\begin{enumerate}[i.]
+		\item A pointer to a \mintinline{c}{tagged_union} type, be it an array or not
+		\item Number of elements in the \mintinline{c}{tagged_union} passed (for reasons related to setting the value of \mintinline{c}{int next} for each tuple element)
+		\item An \mintinline{c}{char} array identifier of size at most 64
+	\end{enumerate}
+
+	It falls entirely in the responsibility of the user to ensure that the passed \mintinline{c}{tagged_union} has correct data and type associations. \textbf{Undefined behaviour may be caused by incorrect usage of \mintinline{c}{tagged_union}}.
+	
+	\subsection{Tuple and Memory Management}
+
+	Tuples are all to be stored in a single dynamic array of type \mintinline{c}{tuple_t}, where each element represents an element to some tuple element. Elements belonging to the same tuple (i.e. of the same identifier) are stored sequentially in left-to-right order. Tuple and Memory Management is a key part to the following three desired features: Creation of a tuple, deletion of a tuple, and joining of two tuples.\\
+
+	We look into each of these by considering a series of examples, starting with the creation of a \mintinline{c}{tuple_t} array and its population with the first tuple, as illustrated in Figure \ref{fig:createtuple}.
+	
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{C}
+tuples = (tuple_t*)malloc(0);
+tagged_union example[2] = {{.type = i, .val.i = 10}, {.type = c, .val.c = 'T'}};
+
+createTuple("1", &example, 2);
+\end{minted}
+	where \mintinline{c}{"1"} is simply the identifier of the tuple to be created and \mintinline{c}{2} is the size of the tuple. The above code does the following:
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{malloc()} a dynamic array named \mintinline{c}{tuples} of type \mintinline{c}{tuple_t}, with initial size 0, in which all tuples and their elements are to be stored
+		\item Specification of a \mintinline{c}{tagged_union} with tuple data by the user
+		\item A call to a function \mintinline{c}{createTuple()} responsible for tuple and memory management upon creation of a new tuple
+	\end{enumerate}
+
+	The still-to-be specified \mintinline{c}{createTuple()} function is to ensure that the identifier is unique, and if so,
+	\begin{enumerate}[i.]
+		\item Issue a \mintinline{c}{realloc} to expand the \mintinline{c}{tuples} array accordingly
+		\item Populate the newly specified memory locations with the supplied data, in the order in which it appears from left-to-right
+	\end{enumerate}
+
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.25\linewidth]{../Desktop/create_tuple}
+		\caption{Diagrammatic representation of the procedural sequence for initial creation of first tuple.}
+		\label{fig:createtuple}
+	\end{figure}
+
+	We now proceed to consider tuple deletion, as illustrated in Figure \ref{fig:deletetuple}. A function named \mintinline{c}{deleteTuple()} should check if a passed tuple identifier exists within \mintinline{c}{tuples}, and if so,
+	\begin{enumerate}[i.]
+		\item Point to the start of the tuple to be deleted, within \mintinline{c}{tuples}
+		\item Use \mintinline{c}{memmove()} to shift down the memory contents \textit{succeeding} the end of the tuple to be deleted to the location of the pointer (i.e. to the start of the tuple being deleted)
+		\item Issue a \mintinline{c}{realloc} to reduce the size of \mintinline{c}{tuples} by the size of the deleted tuple
+	\end{enumerate}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.55\linewidth]{../Desktop/delete_tuple}
+		\caption{Diagrammatic representation of the procedural sequence for tuple deletion.}
+		\label{fig:deletetuple}
+	\end{figure}
+
+	The last desired operation that requires significant Tuple and Memory Management is that of joining two tuples, in the order specified. This is achieved by a still-to-be-specified function \mintinline{c}{joinTuples()}, taking as input two \mintinline{c}{tuple_t} pointers and a new identifier, which if both pointers are valid and the identifier is unique,
+	\begin{enumerate}[i.]
+		\item Creates a \mintinline{c}{tagged_union} array of the aforementioned size, and populates it first with the data of the first tuple and then with that of the second, in left-to-right order
+		\item Issues a call to \mintinline{c}{createTuple()} with the passed identifier and newly constructed \mintinline{c}{tagged_union} specification
+	\end{enumerate}
+
+	\subsection{Desired Functions and Modularity}
+	
+	Special considerations were taken to ensure that the design is as modular as possible. There is a reason why no further explanation and/or diagrammatic representation is given for the join operation - once the \mintinline{c}{tagged_union} is constructed, the rest of the function is equivalent to \mintinline{c}{createTuple()}, and hence why it is intended that a call to it is performed. This avoided significant code repetition, by designing \mintinline{c}{createTuple()} to be as structurally-agnostic as possible (i.e. of minimal dependencies).\\
+	
+	Modularity was not restricted to this particular case only - convenience functions, such as those to check if a \mintinline{c}{malloc()} or \mintinline{c}{realloc()} operation was carried out successfully, were written to have minimal dependencies and thus could be used practically anywhere.\\
+	
+	The code was designed so that any manipulation of supplied data and its type is carried out within \mintinline{c}{switch} statements, so that support for new data types can be simply added by designing appropriate \mintinline{c}{case} statements and extending the \mintinline{c}{tagged_union} structure to support the new type.\\
+	
+	Besides the \mintinline{c}{createTuple()}, \mintinline{c}{deleteTuple()} and \mintinline{c}{joinTuples()} functions, a series of other features implemented through functions is desired,
+	\begin{enumerate}[i.]
+		\item 
+	\end{enumerate}
+
+	The functional decelerations for each of these, along with any constants used, and definition of the \mintinline{c}{tagged_union} and \mintinline{c}{tuple_t} structures, are found in the header file \mintinline{c}{tuple_t.h}. Further explanations on the implementation on each of these in \mintinline{c}{tuple_t.c} is provided in the next section.
+	
+	\newpage
+	
+	\section{Functional Listings}
+	
+	\subsection{\mintinline{c}{tuple_t* getTupleByID()}}
+	
+	Fetches a pointer to the start of a tuple, by means of an supplied tuple identifier, if a match is found. Otherwise a \mintinline{c}{NULL} pointer is returned. Developers should explicitly handle \mintinline{c}{NULL} pointer return, to implement their own logic depending on their particular use case.\\
+	 
+	The returned pointer should not be stored indefinitely, especially if it is to be used after some creation, deletion, or join operation, as the \mintinline{c}{tuples} dynamic array may have been moved around for memory management purposes.\\
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{char search_id[VAR_NAME_SIZE]}: character array of acceptable length up to 64 bytes
+	\end{enumerate}
+
+	\textit{Return}
+	\begin{enumerate}[i.]
+		\item If a match is found, a \mintinline{c}{tuple_t*} pointer to the start of a tuple with matching identifier
+		\item Otherwise, a \mintinline{c}{NULL} pointer
+	\end{enumerate}
+	
+	Firstly, a pointer to be returned is defined and initialised to \mintinline{c}{NULL},
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuple_t *match = NULL;
+\end{minted}
+	
+	The function then establishes the length of the supplied identifier, and stores it in a variable \mintinline{c}{int dimS0_in}.
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{C}
+while (search_id[k++] != '\0'){
+	dimS0_in++;
+}
+\end{minted}
+
+	The function then loops through \mintinline{c}{tuples}, with cases to skip from the start of one tuple to the next, since the elements in between need not be searched as they have the same identifier. Note that here, \mintinline{c}{tuples_size} is the current size of the \mintinline{c}{tuples} array. Skipping from one tuple to the next is carried out within line 5 in the listing below.
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+for (int j = 0; j < tuples_size; j++) {
+	// statements
+
+	// if some condition satisfied
+	j += tuples[j].next - 1;
+	continue; 
+
+	// statements
+}
+\end{minted}
+
+	Within the looping construct, the length of the identifier is found for the current tuple being pointed to, in a similar fashion to what was done for the search identifier. If the identifier lengths do not match, then definitely the identifiers are not equal and thus the pointer is incremented to the start of the next tuple.\\
+	
+	If however the lengths match, a check if the individual pair-wise characters between the identifiers match. This is done in the following manner,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+for (k = 0; k < dimS0_in; k++) {
+	if (search_id[k] == tuples[j].id[k])
+	match_count++;
+}
+\end{minted}
+where \mintinline{c}{int match_count} is used to store the number of matching characters. If the number of matching character-pairs is less then the length of the identifiers, then clearly they do not match in at least one position and hence the pointer is moved to the start of the next tuple.\\
+
+Otherwise, the pointer \mintinline{c}{match} is set to the pointer of the first element of the current tuple, and a \mintinline{c}{break} is issued.
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+match = &tuples[j];
+break;
+\end{minted}
+
+If no match is found, \mintinline{c}{match} would still be \mintinline{c}{NULL} and thus that would be the return. 
+
+	\subsection{\mintinline{c}{void ptr_alloc_valid()}}
+	
+	Simple convenience function that checks if valid pointer is returned after a \mintinline{c}{malloc()} or \mintinline{c}{realloc()} operation; if \mintinline{c}{NULL}, \mintinline{c}{EXIT_FAILURE} is instructed so as to eliminate potential issues in memory management, prevent core dumps, etc...\\
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{void *ptr}: A pointer typecast to \mintinline{c}{(void*)}
+	\end{enumerate}
+
+	A simple \mintinline{c}{NULL} check is carried out, and if true an error message is displayed and the program exits:
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+if (ptr == NULL) {
+	puts("TUPLE_ALLOCATION_FAILURE: Memory allocation failed for array during either initial malloc or subsequent realloc.\n");
+	exit(EXIT_FAILURE);
+}
+\end{minted}
+	
+	\subsection{\mintinline{c}{void createTuple()}}
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{char id[VAR_NAME_SIZE]}: character array of acceptable length up to 64 bytes
+		\item \mintinline{c}{tagged_union in[]}: array of \mintinline{c}{tagged_union} in which the tuple element data is specified and formatted
+		\item \mintinline{c}{int dimS0}: dimensionality about the $0^{\text{th}}$ axis of the input \mintinline{c}{tagged_union} array
+	\end{enumerate}
+
+	Firstly, the function ensures that the specified identifier does not already exist, by means of the \mintinline{c}{getTupleByID()} function. If this is not so, an error is printed in the terminal:
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+if(getTupleByID(id) != NULL){
+	printf("TUPLE_CREATE_ERROR: Tuple ID %s already registered in stack.\n", id);
+}
+\end{minted}
+
+	If function execution proceeds, memory is allocated to the \mintinline{c}{tuples} array by increasing the size with \mintinline{c}{(tuples_size + dimS0) * sizeof(tuple_t)}. A call to \mintinline{c}{ptr_alloc_valid()} is carried out to ensure successful allocation.
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuples = realloc(tuples, (tuples_size + dimS0) * sizeof(tuple_t)); // adjust size to hold new tuple data
+ptr_alloc_valid((void*) tuples);
+\end{minted}
+
+	Looping is then used to allocate data to the elements via the returned pointer. The loop specification is,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+for(int j = tuples_size; j < (tuples_size + dimS0); j++){
+	// statements to loop through
+}
+\end{minted}
+	which specifies that the new tuple elements will be appended to the very end of \mintinline{c}{tuples}. The identifier variable \mintinline{c}{tuples[j].id} is populated using usual copying techniques for \mintinline{c}{char} arrays. The variable \mintinline{c}{tuples[j].next} is populated using the following logic,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuples[j].next = dimS0 + tuples_size - j;
+\end{minted}
+	which specifies how much the pointer must be incremented to reach the end of the array (or rather, the start of the next tuple is further tuples are created later on).\\
+
+	The data formatting enforced by the \mintinline{c}{tagged_union} comes in handy when populating the data part of the tuple, which is done using a \mintinline{c}{switch} statement on the data type of the current element, \mintinline{c}{in[j - tuples_size].type}; an example \mintinline{c}{case} statement is provided,
+
+\newpage
+
+\begin{minted}[baselinestretch=1.2, linenos]{c}
+case i: tuples[j].data.type = i;
+	tuples[j].data.val.i = in[j - tuples_size].val.i;
+	break;
+\end{minted}
+
+	Note that, the \mintinline{c}{switch} statement is carried out on an \mintinline{c}{enum} type and thus correct population of the \mintinline{c}{tagged_union} supplied by the user is assumed, specifically between the data and it's associated type. Incorrect definitions may lead to undefined behaviour.\\
+
+Lastly, the \mintinline{c}{tuples_size} is updated: \mintinline{c}{tuples_size += dimS0;}
+
+\subsection{\mintinline{c}{void deleteTuple()}}
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{char id[VAR_NAME_SIZE]}: character array of acceptable length up to 64 bytes
+	\end{enumerate}
+
+	Firstly, a function call to \mintinline{c}{getTupleByID()} is made to fetch the \mintinline{c}{tuple_t*} pointer to the tuple corresponding with the identifier. A check is also carried out in case \mintinline{c}{getTupleByID()} returns \mintinline{c}{NULL}. 
+	
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuple_t* tuple_ptr = getTupleByID(id);
+	
+if(tuple_ptr == NULL){
+	printf("TUPLE_DELETE_ERROR: Tuple ID %s not found and thus deletion cannot be performed.\n", id);
+}
+\end{minted}
+
+	Since \mintinline{c}{getTupleByID()} fetches a pointer to the first element of a tuple, \mintinline{c}{tuple_ptr->next} corresponds to the size of the tuple. This is stored in \mintinline{c}{int size = tuple_ptr->next;} and then the size of the \mintinline{c}{tuples} array \textbf{after} the tuple to be deleted is found,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+long int copy_length = tuples_size - ((tuple_ptr + size) - tuples);
+\end{minted}
+
+	The \mintinline{c}{tuples_size} variable is decremented by \mintinline{c}{size}. After which, the memory contents of \mintinline{c}{tuples} \textbf{after} the tuple to be deleted are shifted using \mintinline{c}{memmove} to the location of the start of the tuple being deleted,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuples_size -= size;
+memmove(tuple_ptr, tuple_ptr + size, copy_length * sizeof(tuple_t));
+\end{minted}
+
+	To aid with this, kindly refer back to Figure \ref{fig:deletetuple} and the Tuple and Memory Management discussion provided earlier on. An explanation on the use of \mintinline{c}{memmove} follows\footnote{Kernighan, B. W. \& Ritchie, D. M. (2012) \textit{The C Programming Language}, 2nd Edition, Prentice-Hall, New Jersey, USA; pg. 250} since \mintinline{c}{tuple_ptr} points to the start of the tuple to be deleted, then we must move \mintinline{c}{copy_length * sizeof(tuple_t)} bytes from \mintinline{c}{tuple_ptr + size} to \mintinline{c}{tuple_ptr}.\\
+
+	Lastly, a \mintinline{c}{realloc()} is carried out to free up memory and a call to \mintinline{c}{ptr_alloc_valid()} is made to ensure correct allocation.
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+tuples = realloc(tuples, tuples_size * sizeof(tuple_t));
+ptr_alloc_valid((void*) tuples);
+\end{minted}
+
+	\subsection{\mintinline{c}{joinTuples()}}
+
+	While \mintinline{c}{createTuple()} and \mintinline{c}{deleteTuple()} are rather self-explanatory, \mintinline{c}{joinTuples()} merits explanation. The function takes an identifier (which must be unique), and two pointers to elements in \mintinline{c}{tuples}. These pointers however may not necessarily be at the start of a tuple. One can choose to fetch pointer to the start of a tuple by \mintinline{c}{getTupleByID()}, then shift it by some $0 < x <$ size of tuple, to join with \textit{only a part of the tuple}. This is achieved through the use of the \mintinline{c}{.next} variable.\\
+	
+	Developers should take care that the pointers passed are current, and point to the desired elements in \mintinline{c}{tuples}. With this in mind, it is recommended to fetch pointers at compile time using \mintinline{c}{getTupleByID()}.\\
+
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{char id[VAR_NAME_SIZE]}: character array of acceptable length up to 64 bytes
+		\item \mintinline{c}{tuple_t* tuple_ptr_1}: pointer to an element in \mintinline{c}{tuples}, corresponding to the first tuple in the join (leftmost)
+		\item \mintinline{c}{tuple_t* tuple_ptr_2}: pointer to an element in \mintinline{c}{tuples}, corresponding to the second tuple in the join (rightmost)
+	\end{enumerate}
+
+	Firstly, a simple check is carried out to verify that the pointer are not \mintinline{c}{NULL}. If so, an error is printed and the join operation is not carried out,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+if(tuple_ptr_1 != NULL && tuple_ptr_2 != NULL){
+	// some nifty code goes here
+}
+else{
+	printf("TUPLE_JOIN_ERROR: At least one of the tuple pointers specified is NULL.\n");
+}
+\end{minted}
+
+	If the join operation is to be carried out, the size of the new resulting tuple is found and a \mintinline{c}{tagged_union} array is defined to hold the data specification for the new tuple,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+int dimS0 = tuple_ptr_1->next + tuple_ptr_2->next;
+tagged_union joinedData[dimS0];
+\end{minted}
+
+	The \mintinline{c}{tagged_union} array is then first populated with the data from the first tuple (or part of) and then with the data from the second tuple (or part of), in left-to-right order.
+	
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+for (int j = 0; j < tuple_ptr_1->next; j++){
+	joinedData[j] = tuple_ptr_1[j].data;
+} // populate tagged_union with data of ptr_1 first
+
+for (int j = tuple_ptr_1->next; j < dimS0; j++){
+	joinedData[j] = tuple_ptr_2[j - tuple_ptr_1->next].data;
+} // then populate tagged_union with data of ptr_1 first
+\end{minted}
+
+	Lastly, a call \mintinline{c}{createTuple(id, joinedData, dimS0);} is made, highlighting modularity in the code design.
+
+	\subsection{\mintinline{c}{showTuple()}}
+	
+	The following is a simple function that prints out a formatted string with the contents of a tuple. If say the \mintinline{c}{tagged_union} array of a tuple is of the form,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+{{.type = i, .val.i = 10}, {.type = c, .val.c = 'T'}, {.type = f, .val.f = 10.2}}
+\end{minted}
+	then the output string is of the form \mintinline{text}{(10, 'T', 10.2)}.\\
+	
+	Developers should take care that the pointers passed are current, and point to the desired elements in \mintinline{c}{tuples}. With this in mind, it is recommended to fetch pointers at compile time using \mintinline{c}{getTupleByID()}. If one points to an element of a tuple that is not the first element, then the \textit{succeeding} elements (inclusive) are shown.\\
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{tuple_t* tuple_ptr_1}: pointer to an element in \mintinline{c}{tuples}
+	\end{enumerate}
+
+	Firstly, a check is carried out to ensure that the pointer is not \mintinline{c}{NULL}. If so, an error message is printed,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+if (tuple_ptr != NULL){
+	// hey, I really hope some code was actually written here
+}
+else{
+	printf("TUPLE_SHOW_ERROR: Tuple pointer specified is NULL.\n");
+}
+\end{minted}
+
+	The format is specified through a series of \mintinline{c}{switch} statements based on the data type of an element. We shall consider, for example, the \mintinline{c}{int} data type. If the first element happens to be an integer,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+case i: printf("(%d,", tuple_ptr->data.val.i);
+	break;
+\end{minted}
+
+	If some element between the first and last is an integer, where \mintinline{c}{int j} shifts the pointer to an element between the first and the last,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+case i: printf(" %d,", (tuple_ptr + j)->data.val.i);
+	break;
+\end{minted}
+
+	And if the last element happens to be an integer, where \mintinline{c}{int last} shifts the pointer to the last element,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+case i: printf(" %d)", (tuple_ptr + last)->data.val.i);
+	break;
+\end{minted}
+
+	\subsection{\mintinline{c}{void saveAllTuples()}}
+	
+	The following is a simple function that creates a formatted text file holding information of all tuples currently in the heap, which can then be reloaded at a later time. The format specification is \mintinline{text}{<identifier> <next> <type> <val>\n}.\\
+	
+	\textit{Parameters}
+	\begin{enumerate}[i.]
+		\item \mintinline{c}{char path[]}: a character array specifying the file path to which the text file is to be created and saved, including the file name
+	\end{enumerate}
+	
+	A file pointer is first opened in write mode, at the specified \mintinline{c}{path[]},
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+FILE *fp;
+fp = fopen(path, "w");
+\end{minted}
+
+	Then, the function loops over each element in \mintinline{c}{tuples} in order, and writes down a line to the file,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+for(int j = 0; j < tuples_size; j++){
+
+	fprintf(fp, "%s %d ", tuples[j].id, tuples[j].next);
+	
+	// more code to follow
+}
+\end{minted}
+
+	Depending on the type, a format string is chosen using a \mintinline{c}{switch} statement as done a number of times before now. Considering the integer type, a \mintinline{c}{case} statement looks something like this,
+\begin{minted}[breaklines, baselinestretch=1.2, linenos]{c}
+case i: fprintf(fp, "%c %d\n", 'i', tuples[j].data.val.i);
+	break;
+\end{minted}
+
+	After looping through all of \mintinline{c}{tuples}, \mintinline{c}{fclose(fp);} is issued, to close the file and set an \mintinline{c}{EOF} marker.
+	
+	\subsection{\mintinline{c}{void loadAllTuples()}}
+	
+	This function provides the functionality to read tuple data from a file at the specified path, which must be formatted in the manner specified by \mintinline{c}{saveAllTuples()}. Otherwise, undefined behaviour is almost definitely guaranteed to occur. Any manual manipulation to said files may also result in undefined behaviour. Any data type errors will lead to a program exit, to restrict undefined behaviour as much as possible. During such occurrences, a graceful close is carried out, where all tuples currently in the heap are saved to the current directory.\\
+	
+	\textit{Parameters}
+	\begin{itemize}[i.]
+		\item  \mintinline{c}{char path[]}: a character array specifying the file path from which the file is to be loaded
+	\end{itemize}
+
+\end{document}          
