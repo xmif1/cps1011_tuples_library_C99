@@ -9,7 +9,7 @@
 #define VAR_NAME_SIZE 64 // based on the ISO C Standard for naming variables
 
 typedef struct{
-    enum{d, u, hi, hu, li, lu, lli, llu, f, lf, Lf, c, uc, sc} type;
+    enum{d, u, hi, hu, li, lu, lli, llu, f, lf, Lf, c, s} type;
 
     union{
         int d;
@@ -24,8 +24,7 @@ typedef struct{
         double lf;
         long double Lf;
         char c;
-        unsigned char uc;
-        signed char sc;
+        char *s;
     } val;
 } tagged_union; // defines a union structure where data type can be tracked
 

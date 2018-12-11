@@ -8,13 +8,18 @@
 tuple_t *tuples;
 int tuples_size = 0;
 
+char **str_ptrs;
+int str_ptrs_size = 0;
+
 int main() {
 
     tuples = (tuple_t*)malloc(0); // malloc array of tuple_t structs
     ptr_alloc_valid((void*) tuples);
+    str_ptrs = (char**)malloc(0); // malloc array of str_ptrs structs
+    ptr_alloc_valid((void*) str_ptrs);
 
-    tagged_union test_1[2] = {{.type = i, .val.i = 10}, {.type = c, .val.c = 'T'}};
-    tagged_union test_2[2] = {{.type = i, .val.i = 2}, {.type = c, .val.c = 'X'}};
+    tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = c, .val.c = 'T'}};
+    tagged_union test_2[2] = {{.type = d, .val.d = 2}, {.type = c, .val.c = 'X'}};
 
     createTuple("abc", &test_1, 2);
     createTuple("efg", &test_2, 2);
@@ -103,6 +108,24 @@ void createTuple(char id[VAR_NAME_SIZE], tagged_union in[], int dimS0){
 
                 case c: tuples[j].data.type = c;
                     tuples[j].data.val.c = in[j - tuples_size].val.c;
+                    break;
+
+                case s: tuples[j].data.type = s;
+                    int str_size = 0;
+                    while(in[j - tuples_size].val.s[str_size] != '\0'){
+                        str_size++;
+                    }
+
+                    str_ptrs = (char**)realloc(str_ptrs, (str_ptrs_size + 1) * sizeof(char*));
+                    str_ptrs[str_ptrs_size] = (char*)malloc(str_size * sizeof(char));
+                    ptr_alloc_valid((void*) str_ptrs[str_ptrs_size]);
+
+                    for(int k = 0; k < str_size; k++){
+                        str_ptrs[str_ptrs_size][k] = in[j - tuples_size].val.s[k];
+                    }
+
+                    tuples[j].data.val.s = str_ptrs[str_ptrs_size];
+                    str_ptrs_size++;
                     break;
             } // default case not necessary since .type specifies an enum format
         }
@@ -264,6 +287,9 @@ void showTuple(tuple_t* tuple_ptr){
 
             case c: printf("('%c',", tuple_ptr->data.val.c);
                 break;
+
+            case s: printf("('%s',", tuple_ptr->data.val.s);
+                break;
         } // default case not necessary since .type specifies an enum format
 
         int last = tuple_ptr->next - 1;
@@ -305,6 +331,9 @@ void showTuple(tuple_t* tuple_ptr){
 
                 case c: printf(" '%c',", (tuple_ptr + j)->data.val.c);
                     break;
+
+                case s: printf(" '%s',", (tuple_ptr + j)->data.val.s);
+                    break;
             } // default case not necessary since .type specifies an enum format
         }
 
@@ -343,6 +372,9 @@ void showTuple(tuple_t* tuple_ptr){
                 break;
 
             case c: printf(" '%c')", (tuple_ptr + last)->data.val.c);
+                break;
+
+            case s: printf(" '%s')", (tuple_ptr + last)->data.val.s);
                 break;
         } // default case not necessary since .type specifies an enum format
     }
@@ -397,6 +429,9 @@ void saveAllTuples(char path[]){
 
             case c: fprintf(fp, "%d %c\n", 12, tuples[j].data.val.c);
                 break;
+
+            case s: fprintf(fp, "%d %s\n", 12, tuples[j].data.val.s);
+                break;
         } // default case not necessary since .type specifies an enum format
     }
 
@@ -409,7 +444,7 @@ void saveAllTuples(char path[]){
  * undefined behaviour as much as possible: a graceful close is carried out, where tuples are saved to the directory.*/
 void loadAllTuples(char path[]){
 
-    int new_line_size = 128, tuple_size = 0, tuple_size_temp = 0, current_size = 0;
+    int new_line_size = 128, tuple_size = 0, tuple_size_temp = 0, current_size = 0, load_str_ptrs_size = 0;
 
     char tuple_id[VAR_NAME_SIZE];
     int format;
@@ -418,6 +453,7 @@ void loadAllTuples(char path[]){
     char *new_line;
     char *data;
     char *conversion_ptr;
+    char **load_str_ptrs;
     tagged_union *read_store;
 
     // to store fetched line from file; will be expanded as necessary
@@ -438,6 +474,10 @@ void loadAllTuples(char path[]){
     if(fp != NULL){
         while(!feof(fp)){ // loop until end of file reached
             need_not_realloc = 0;
+            load_str_ptrs_size = 0;
+
+            load_str_ptrs = (char**)malloc(0);
+            ptr_alloc_valid((void*)load_str_ptrs);
 
             fgets(new_line, new_line_size, fp); // fetch line
 
@@ -604,6 +644,26 @@ void loadAllTuples(char path[]){
                             }
                             break;
 
+                        case 13: read_store[k].type = s;
+                            load_str_ptrs = (char**)realloc(load_str_ptrs, (load_str_ptrs_size + 1) * sizeof(char*));
+                            ptr_alloc_valid((void*) load_str_ptrs);
+
+                            int size = 0;
+                            while(data[size] != '\0'){
+                                size++;
+                            }
+
+                            load_str_ptrs[load_str_ptrs_size] = (char*)malloc(size * sizeof(char));
+                            ptr_alloc_valid((void*) load_str_ptrs[load_str_ptrs_size]);
+
+                            for(int n = 0; n < size; n++){
+                                load_str_ptrs[load_str_ptrs_size][n] = data[n];
+                            }
+
+                            read_store[k].val.s = load_str_ptrs[load_str_ptrs_size];
+                            load_str_ptrs_size++;
+                            break;
+
                         default: printf("TUPLE_LOAD_ERROR: Specified type with numeric identifier %d not recognised by library.\n", format);
                             saveAllTuples("tuple_load_error_SAVE.txt");
                             exit(EXIT_FAILURE); // graceful close
@@ -611,6 +671,12 @@ void loadAllTuples(char path[]){
 
                     if(current_size == 1){ // if reached end of tuple, call createTuple and move on to the next tuple
                         createTuple(tuple_id, read_store, tuple_size);
+
+                        for(int n = 0; n < load_str_ptrs_size; n++){
+                            free(load_str_ptrs[n]);
+                        }
+
+                        free(load_str_ptrs);
                     }
 
                     need_not_realloc = 1;
