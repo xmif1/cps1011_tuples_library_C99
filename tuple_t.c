@@ -21,14 +21,14 @@ int main() {
     tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 1"}};
     tagged_union test_2[2] = {{.type = d, .val.d = 2}, {.type = s, .val.s = "String 2"}};
 
-    //createTuple("abc", &test_1, 2);
-    //createTuple("efg", &test_2, 2);
+    createTuple("abc", &test_1, 2);
+    createTuple("efg", &test_2, 2);
+    deleteTuple("abc");
     //joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
 
-
-    loadAllTuples("/Users/xandrumifsud/Desktop/test.txt");
-    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
-    showTuple(getTupleByID("xyz"));
+    //loadAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    //saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    showTuple(getTupleByID("abc"));
 
     return 0;
 }
@@ -200,6 +200,13 @@ void deleteTuple(char id[VAR_NAME_SIZE]){
         int size = tuple_ptr->next; // since getTupleByID() returns a pointer to the first element, .next is equal to size
         long int copy_length = tuples_size - ((tuple_ptr + size) - tuples); // size of tuple array AFTER tuple to be deleted
         tuples_size -= size; // decrement tuples array size by size of deleted tuple
+
+        // freeing any character arrays which are pointed to by the tuple
+        for(int j = 0; j < size; j++){
+            if((tuple_ptr + j)->data.type == s){
+                free((tuple_ptr + j)->data.val.s);
+            }
+        }
 
         /* Performing a shift in memory contents, where the block of memory for tuples array AFTER the tuple to be deleted
          * is shifted to the START of the tuple to be deleted. A realloc is then performed so as to decrement the block
