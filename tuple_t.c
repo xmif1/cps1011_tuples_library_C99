@@ -19,10 +19,11 @@ int main() {
     ptr_alloc_valid((void*) str_ptrs);
 
     tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 1"}};
-    tagged_union test_2[2] = {{.type = d, .val.d = 2}, {.type = s, .val.s = "String 2"}};
+    tagged_union test_2[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 2"}};
 
     createTuple("abc 123", &test_1, 2);
     createTuple("efg", &test_2, 2);
+    printf("%d\n", cmpTuples("abc 123", "efg"));
     deleteTuple("efg");
     //joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
 
@@ -131,6 +132,61 @@ void createTuple(char id[VAR_NAME_SIZE], tagged_union in[], int dimS0){
     }
 }
 
+/* Performs a delete operation for a tuple and its contents, with some memory management to free up memory.*/
+void deleteTuple(char id[VAR_NAME_SIZE]){
+
+    tuple_t* tuple_ptr = getTupleByID(id);
+
+    if(tuple_ptr == NULL){
+        printf("TUPLE_DELETE_ERROR: Tuple ID %s not found and thus deletion cannot be performed.\n", id);
+    }
+    else{
+        int size = tuple_ptr->next; // since getTupleByID() returns a pointer to the first element, .next is equal to size
+        long int copy_length = tuples_size - ((tuple_ptr + size) - tuples); // size of tuple array AFTER tuple to be deleted
+
+        // freeing any character arrays which are pointed to by the tuple
+        for(int j = 0; j < size; j++){
+            if((tuple_ptr + j)->data.type == s){
+                free((tuple_ptr + j)->data.val.s);
+            }
+        }
+
+        /* Performing a shift in memory contents, where the block of memory for tuples array AFTER the tuple to be deleted
+         * is shifted to the START of the tuple to be deleted. A realloc is then performed so as to decrement the block
+         * size and free up memory for the OS.*/
+        tuples_size -= size; // decrement tuples array size by size of deleted tuple
+        memmove(tuple_ptr, tuple_ptr + size, copy_length * sizeof(tuple_t));
+        tuples = realloc(tuples, tuples_size * sizeof(tuple_t));
+        ptr_alloc_valid((void*) tuples);
+    }
+}
+
+/* Takes a pointer to tuples and joins them (in the order of specification), assigning the specified ID (if available).
+ * -> Note that, as a matter of fact the pointers need not point to the start of a tuple; one can choose to fetch a start
+ * pointer, then shift it by x < size of tuple, to join with only a part of the tuple.
+ * -> Developers should take care to ensure that the specified pointers are current and point to the desired tuples. With
+ * this in mind, it is recommended to fetch pointers at compile time using getTupleByID().*/
+void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_2){
+
+    if(tuple_ptr_1 != NULL && tuple_ptr_2 != NULL){
+        int dimS0 = tuple_ptr_1->next + tuple_ptr_2->next; // establish size of new tuple
+        tagged_union joinedData[dimS0]; // define new tagged_union struct to format the joined data
+
+        for (int j = 0; j < tuple_ptr_1->next; j++){
+            joinedData[j] = tuple_ptr_1[j].data;
+        } // populate tagged_union with data of ptr_1 first
+
+        for (int j = tuple_ptr_1->next; j < dimS0; j++){
+            joinedData[j] = tuple_ptr_2[j - tuple_ptr_1->next].data;
+        } // then populate tagged_union with data of ptr_1 first
+
+        createTuple(id, joinedData, dimS0); // create new tuple by explicit call to createTuple
+    }
+    else{
+        printf("TUPLE_JOIN_ERROR: At least one of the tuple pointers specified is NULL.\n");
+    }
+}
+
 /* Fetches by ID a pointer to the start of a tuple, if a match is found. Otherwise a NULL pointer is returned.
  * -> Developers should explicitly handle NULL pointer return, to implement their own logic depending on their particular
  * use case.
@@ -187,61 +243,6 @@ char* getTupleID(tuple_t* tuple_ptr){
     }
     else{
         return tuple_ptr->id;
-    }
-}
-
-/* Performs a delete operation for a tuple and its contents, with some memory management to free up memory.*/
-void deleteTuple(char id[VAR_NAME_SIZE]){
-
-    tuple_t* tuple_ptr = getTupleByID(id);
-
-    if(tuple_ptr == NULL){
-        printf("TUPLE_DELETE_ERROR: Tuple ID %s not found and thus deletion cannot be performed.\n", id);
-    }
-    else{
-        int size = tuple_ptr->next; // since getTupleByID() returns a pointer to the first element, .next is equal to size
-        long int copy_length = tuples_size - ((tuple_ptr + size) - tuples); // size of tuple array AFTER tuple to be deleted
-
-        // freeing any character arrays which are pointed to by the tuple
-        for(int j = 0; j < size; j++){
-            if((tuple_ptr + j)->data.type == s){
-                free((tuple_ptr + j)->data.val.s);
-            }
-        }
-
-        /* Performing a shift in memory contents, where the block of memory for tuples array AFTER the tuple to be deleted
-         * is shifted to the START of the tuple to be deleted. A realloc is then performed so as to decrement the block
-         * size and free up memory for the OS.*/
-        tuples_size -= size; // decrement tuples array size by size of deleted tuple
-        memmove(tuple_ptr, tuple_ptr + size, copy_length * sizeof(tuple_t));
-        tuples = realloc(tuples, tuples_size * sizeof(tuple_t));
-        ptr_alloc_valid((void*) tuples);
-    }
-}
-
-/* Takes a pointer to tuples and joins them (in the order of specification), assigning the specified ID (if available).
- * -> Note that, as a matter of fact the pointers need not point to the start of a tuple; one can choose to fetch a start
- * pointer, then shift it by x < size of tuple, to join with only a part of the tuple.
- * -> Developers should take care to ensure that the specified pointers are current and point to the desired tuples. With
- * this in mind, it is recommended to fetch pointers at compile time using getTupleByID().*/
-void joinTuple(char id[VAR_NAME_SIZE], tuple_t* tuple_ptr_1, tuple_t* tuple_ptr_2){
-
-    if(tuple_ptr_1 != NULL && tuple_ptr_2 != NULL){
-        int dimS0 = tuple_ptr_1->next + tuple_ptr_2->next; // establish size of new tuple
-        tagged_union joinedData[dimS0]; // define new tagged_union struct to format the joined data
-
-        for (int j = 0; j < tuple_ptr_1->next; j++){
-            joinedData[j] = tuple_ptr_1[j].data;
-        } // populate tagged_union with data of ptr_1 first
-
-        for (int j = tuple_ptr_1->next; j < dimS0; j++){
-            joinedData[j] = tuple_ptr_2[j - tuple_ptr_1->next].data;
-        } // then populate tagged_union with data of ptr_1 first
-
-        createTuple(id, joinedData, dimS0); // create new tuple by explicit call to createTuple
-    }
-    else{
-        printf("TUPLE_JOIN_ERROR: At least one of the tuple pointers specified is NULL.\n");
     }
 }
 
@@ -387,6 +388,99 @@ void showTuple(tuple_t* tuple_ptr){
     }
 }
 
+int cmpTuples(char id_1[VAR_NAME_SIZE], char id_2[VAR_NAME_SIZE]){
+
+    tuple_t* tuple_ptr_1 = getTupleByID(id_1);
+    tuple_t* tuple_ptr_2 = getTupleByID(id_2);
+
+    int cmp_ret = INT_MAX;
+
+    if(tuple_ptr_1 == NULL || tuple_ptr_2 == NULL){
+        printf("TUPLE_COMPARE_ERROR: At least one of the passed identifiers is not associated with a tuple.\n");
+    }
+    else if(tuple_ptr_1->next != tuple_ptr_2->next){
+        printf("TUPLE_COMPARE_ERROR: Tuple dimensions do not match and thus tuples are not compatible.\n");
+    }
+    else{
+        int match = 1;
+
+        for(int j = 0; j < tuple_ptr_1->next; j++){
+            if((tuple_ptr_1 + j)->data.type != (tuple_ptr_2 + j)->data.type){
+                match = 0;
+                break;
+            }
+        }
+
+        if(match == 0){
+            printf("TUPLE_COMPARE_ERROR: Tuple pair-wise data types do not match and thus tuples are not compatible.\n");
+        }
+        else{
+            cmp_ret = 0;
+            int ret_strcmp;
+
+            for(int j = 0; j < tuple_ptr_1->next; j++){
+                switch((tuple_ptr_1 + j)->data.type){
+                    case d: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.d, (tuple_ptr_2 + j)->data.val.d, j);
+                        break;
+
+                    case u: cmp_ret = uint_types_cmp((tuple_ptr_1 + j)->data.val.u, (tuple_ptr_2 + j)->data.val.u, j);
+                        break;
+
+                    case hi: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.hi, (tuple_ptr_2 + j)->data.val.hi, j);
+                        break;
+
+                    case hu: cmp_ret = uint_types_cmp((tuple_ptr_1 + j)->data.val.hu, (tuple_ptr_2 + j)->data.val.hu, j);
+                        break;
+
+                    case li: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.li, (tuple_ptr_2 + j)->data.val.li, j);
+                        break;
+
+                    case lu: cmp_ret = uint_types_cmp((tuple_ptr_1 + j)->data.val.lu, (tuple_ptr_2 + j)->data.val.lu, j);
+                        break;
+
+                    case lli: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.lli, (tuple_ptr_2 + j)->data.val.lli, j);
+                        break;
+
+                    case llu: cmp_ret = uint_types_cmp((tuple_ptr_1 + j)->data.val.llu, (tuple_ptr_2 + j)->data.val.llu, j);
+                        break;
+
+                    case f: cmp_ret = float_types_cmp((tuple_ptr_1 + j)->data.val.f, (tuple_ptr_2 + j)->data.val.f, j);
+                        break;
+
+                    case lf: cmp_ret = float_types_cmp((tuple_ptr_1 + j)->data.val.lf, (tuple_ptr_2 + j)->data.val.lf, j);
+                        break;
+
+                    case Lf: cmp_ret = float_types_cmp((tuple_ptr_1 + j)->data.val.Lf, (tuple_ptr_2 + j)->data.val.Lf, j);
+                        break;
+
+                    case c: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.c, (tuple_ptr_2 + j)->data.val.c, j);
+                        break;
+
+                    case s:
+                        ret_strcmp = strcmp((tuple_ptr_1 + j)->data.val.s, (tuple_ptr_2 + j)->data.val.s);
+
+                        if(ret_strcmp > 0){
+                            cmp_ret = j+1;
+                        }
+                        else if(ret_strcmp < 0){
+                            cmp_ret = -j-1;
+                        }
+                        else{
+                            cmp_ret = 0;
+                        }
+                        break;
+                }
+
+                if(cmp_ret != 0){
+                    break;
+                }
+            }
+        }
+    }
+
+    return cmp_ret;
+}
+
 // Function to create a formatted file output with the contents of all tuples, and save the file to the specified path
 void saveAllTuples(char path[]){
 
@@ -448,7 +542,7 @@ void saveAllTuples(char path[]){
  * undefined behaviour as much as possible: a graceful close is carried out, where tuples are saved to the directory.*/
 void loadAllTuples(char path[]){
 
-    int new_line_size = 128, tuple_size = 0, tuple_size_temp = 0, current_size = 0, load_str_ptrs_size = 0;
+    int new_line_size = 2 * VAR_NAME_SIZE, tuple_size = 0, tuple_size_temp = 0, current_size = 0, load_str_ptrs_size = 0;
 
     char tuple_id[VAR_NAME_SIZE];
     int format;
@@ -474,7 +568,7 @@ void loadAllTuples(char path[]){
 
     FILE *fp;
     fp = fopen(path, "r"); // specify read mode only
-    long int fp_pos = ftell(fp);
+    long int fp_pos;
     long int fp_pos_state = ftell(fp);
 
     if(fp != NULL){
@@ -716,99 +810,6 @@ void loadAllTuples(char path[]){
     free(read_store);
 }
 
-int cmpTuples(char id_1[VAR_NAME_SIZE], char id_2[VAR_NAME_SIZE]){
-
-    tuple_t* tuple_ptr_1 = getTupleByID(id_1);
-    tuple_t* tuple_ptr_2 = getTupleByID(id_2);
-
-    int cmp_ret = INT_MAX;
-
-    if(tuple_ptr_1 == NULL || tuple_ptr_2 == NULL){
-        printf("TUPLE_COMPARE_ERROR: At least one of the passed identifiers is not associated with a tuple.");
-    }
-    else if(tuple_ptr_1->next != tuple_ptr_2->next){
-        printf("TUPLE_COMPARE_ERROR: Tuple dimensions do not match and thus tuples are not compatible.");
-    }
-    else{
-        int match = 1;
-
-        for(int j = 0; j < tuple_ptr_1->next; j++){
-            if((tuple_ptr_1 + j)->data.type != (tuple_ptr_2 + j)->data.type){
-                match = 0;
-                break;
-            }
-        }
-
-        if(match == 1){
-            printf("TUPLE_COMPARE_ERROR: Tuple pair-wise data types do not match and thus tuples are not compatible.");
-        }
-        else{
-            cmp_ret = 0;
-            int ret_strcmp;
-
-            for(int j = 0; j < tuple_ptr_1->next; j++){
-                switch(tuple_ptr_1->data.type){
-                    case d: cmp_ret = int_types_cmp(tuple_ptr_1->data.val.d, tuple_ptr_2->data.val.d, j);
-                        break;
-
-                    case u: cmp_ret = uint_types_cmp(tuple_ptr_1->data.val.u, tuple_ptr_2->data.val.u, j);
-                        break;
-
-                    case hi: cmp_ret = int_types_cmp(tuple_ptr_1->data.val.hi, tuple_ptr_2->data.val.hi, j);
-                        break;
-
-                    case hu: cmp_ret = uint_types_cmp(tuple_ptr_1->data.val.hu, tuple_ptr_2->data.val.hu, j);
-                        break;
-
-                    case li: cmp_ret = int_types_cmp(tuple_ptr_1->data.val.li, tuple_ptr_2->data.val.li, j);
-                        break;
-
-                    case lu: cmp_ret = uint_types_cmp(tuple_ptr_1->data.val.lu, tuple_ptr_2->data.val.lu, j);
-                        break;
-
-                    case lli: cmp_ret = int_types_cmp(tuple_ptr_1->data.val.lli, tuple_ptr_2->data.val.lli, j);
-                        break;
-
-                    case llu: cmp_ret = uint_types_cmp(tuple_ptr_1->data.val.llu, tuple_ptr_2->data.val.llu, j);
-                        break;
-
-                    case f: cmp_ret = float_types_cmp(tuple_ptr_1->data.val.f, tuple_ptr_2->data.val.f, j);
-                        break;
-
-                    case lf: cmp_ret = float_types_cmp(tuple_ptr_1->data.val.lf, tuple_ptr_2->data.val.lf, j);
-                        break;
-
-                    case Lf: cmp_ret = float_types_cmp(tuple_ptr_1->data.val.Lf, tuple_ptr_2->data.val.Lf, j);
-                        break;
-
-                    case c: cmp_ret = int_types_cmp(tuple_ptr_1->data.val.c, tuple_ptr_2->data.val.c, j);
-                        break;
-
-                    case s:
-                        ret_strcmp = strcmp(tuple_ptr_1->data.val.s, tuple_ptr_2->data.val.c, j);
-
-                        if(ret_strcmp > 0){
-                            cmp_ret = j+1;
-                        }
-                        else if(ret_strcmp > 0){
-                            cmp_ret = -j-1;
-                        }
-                        else{
-                            cmp_ret = 0;
-                        }
-                        break;
-                }
-
-                if(cmp_ret != 0){
-                    break;
-                }
-            }
-        }
-    }
-
-    return cmp_ret;
-}
-
 int int_types_cmp(long long int num1, long long int num2, int shift){
 
     int cmp_ret = 0;
@@ -859,5 +860,4 @@ void ptr_alloc_valid(void *ptr) {
         printf("TUPLE_ALLOCATION_FAILURE: Memory allocation failed for array during either initial malloc or subsequent realloc.\n");
         exit(EXIT_FAILURE);
     }
-
 }
