@@ -18,22 +18,17 @@ int main() {
     str_ptrs = (char**)malloc(0); // malloc array of str_ptrs structs
     ptr_alloc_valid((void*) str_ptrs);
 
-    tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = c, .val.c = 'T'}};
-    tagged_union test_2[2] = {{.type = d, .val.d = 2}, {.type = c, .val.c = 'X'}};
+    tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 1"}};
+    tagged_union test_2[2] = {{.type = d, .val.d = 2}, {.type = s, .val.s = "String 2"}};
 
-    createTuple("abc", &test_1, 2);
-    createTuple("efg", &test_2, 2);
-    joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
+    //createTuple("abc", &test_1, 2);
+    //createTuple("efg", &test_2, 2);
+    //joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
 
-    // showTuple(getTupleByID("test"));
-
-    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
-
-    deleteTuple("efg");
-    deleteTuple("abc");
-    deleteTuple("xyz");
 
     loadAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
+    showTuple(getTupleByID("xyz"));
 
     return 0;
 }
@@ -117,10 +112,10 @@ void createTuple(char id[VAR_NAME_SIZE], tagged_union in[], int dimS0){
                     }
 
                     str_ptrs = (char**)realloc(str_ptrs, (str_ptrs_size + 1) * sizeof(char*));
-                    str_ptrs[str_ptrs_size] = (char*)malloc(str_size * sizeof(char));
+                    str_ptrs[str_ptrs_size] = (char*)malloc((str_size + 1) * sizeof(char));
                     ptr_alloc_valid((void*) str_ptrs[str_ptrs_size]);
 
-                    for(int k = 0; k < str_size; k++){
+                    for(int k = 0; k <= str_size; k++){
                         str_ptrs[str_ptrs_size][k] = in[j - tuples_size].val.s[k];
                     }
 
@@ -391,46 +386,46 @@ void saveAllTuples(char path[]){
 
     for(int j = 0; j < tuples_size; j++){
 
-        fprintf(fp, "%s %d ", tuples[j].id, tuples[j].next);
+        fprintf(fp, "%s;%d;", tuples[j].id, tuples[j].next);
 
         switch(tuples[j].data.type){ // associate a numerical value to each data type
-            case d: fprintf(fp, "%d %d\n", 1, tuples[j].data.val.d);
+            case d: fprintf(fp, "%d;%d;\n", 1, tuples[j].data.val.d);
                 break;
 
-            case u: fprintf(fp, "%d %u\n", 2, tuples[j].data.val.u);
+            case u: fprintf(fp, "%d;%u;\n", 2, tuples[j].data.val.u);
                 break;
 
-            case hi: fprintf(fp, "%d %hi\n", 3, tuples[j].data.val.hi);
+            case hi: fprintf(fp, "%d;%hi;\n", 3, tuples[j].data.val.hi);
                 break;
 
-            case hu: fprintf(fp, "%d %hu\n", 4, tuples[j].data.val.hu);
+            case hu: fprintf(fp, "%d;%hu;\n", 4, tuples[j].data.val.hu);
                 break;
 
-            case li: fprintf(fp, "%d %li\n", 5, tuples[j].data.val.li);
+            case li: fprintf(fp, "%d;%li;\n", 5, tuples[j].data.val.li);
                 break;
 
-            case lu: fprintf(fp, "%d %lu\n", 6, tuples[j].data.val.lu);
+            case lu: fprintf(fp, "%d;%lu;\n", 6, tuples[j].data.val.lu);
                 break;
 
-            case lli: fprintf(fp, "%d %lli\n", 7, tuples[j].data.val.lli);
+            case lli: fprintf(fp, "%d;%lli;\n", 7, tuples[j].data.val.lli);
                 break;
 
-            case llu: fprintf(fp, "%d %llu\n", 8, tuples[j].data.val.llu);
+            case llu: fprintf(fp, "%d;%llu;\n", 8, tuples[j].data.val.llu);
                 break;
 
-            case f: fprintf(fp, "%d %f\n", 9, tuples[j].data.val.f);
+            case f: fprintf(fp, "%d;%f;\n", 9, tuples[j].data.val.f);
                 break;
 
-            case lf: fprintf(fp, "%d %lf\n", 10, tuples[j].data.val.lf);
+            case lf: fprintf(fp, "%d;%lf;\n", 10, tuples[j].data.val.lf);
                 break;
 
-            case Lf: fprintf(fp, "%d %Lf\n", 11, tuples[j].data.val.Lf);
+            case Lf: fprintf(fp, "%d;%Lf;\n", 11, tuples[j].data.val.Lf);
                 break;
 
-            case c: fprintf(fp, "%d %c\n", 12, tuples[j].data.val.c);
+            case c: fprintf(fp, "%d;%c;\n", 12, tuples[j].data.val.c);
                 break;
 
-            case s: fprintf(fp, "%d %s\n", 12, tuples[j].data.val.s);
+            case s: fprintf(fp, "%d;%s;\n", 13, tuples[j].data.val.s);
                 break;
         } // default case not necessary since .type specifies an enum format
     }
@@ -470,6 +465,8 @@ void loadAllTuples(char path[]){
 
     FILE *fp;
     fp = fopen(path, "r"); // specify read mode only
+    long int fp_pos = ftell(fp);
+    long int fp_pos_state = ftell(fp);
 
     if(fp != NULL){
         while(!feof(fp)){ // loop until end of file reached
@@ -480,12 +477,15 @@ void loadAllTuples(char path[]){
             ptr_alloc_valid((void*)load_str_ptrs);
 
             fgets(new_line, new_line_size, fp); // fetch line
+            fp_pos = ftell(fp);
 
             for(int j = new_line_size - 1; j >= 0; j--){ // to check of \n occurs in fetched line
 
                 if (new_line[j] == '\n'){ // if \n found in input stream, need_not_realloc = TRUE
-                    fseek(fp, -j-1, SEEK_CUR); // shift fp to start of line
-                    fscanf(fp,"%s %d %d %s\n", tuple_id, &tuple_size_temp, &format, data); // fetch formatted input
+                    fseek(fp, fp_pos_state - fp_pos, SEEK_CUR); // shift fp to start of line
+                    fscanf(fp,"%[^;];%d;%d;%[^;];\n", tuple_id, &tuple_size_temp, &format, data); // fetch formatted input
+                    fp_pos = ftell(fp);
+                    fp_pos_state = ftell(fp);
 
                     if(tuple_size_temp >= current_size){ // if start of new tuple found
                         tuple_size = tuple_size_temp;
@@ -644,7 +644,8 @@ void loadAllTuples(char path[]){
                             }
                             break;
 
-                        case 13: read_store[k].type = s;
+                        case 13:
+                            read_store[k].type = s;
                             load_str_ptrs = (char**)realloc(load_str_ptrs, (load_str_ptrs_size + 1) * sizeof(char*));
                             ptr_alloc_valid((void*) load_str_ptrs);
 
@@ -653,10 +654,10 @@ void loadAllTuples(char path[]){
                                 size++;
                             }
 
-                            load_str_ptrs[load_str_ptrs_size] = (char*)malloc(size * sizeof(char));
+                            load_str_ptrs[load_str_ptrs_size] = (char*)malloc((size + 1) * sizeof(char));
                             ptr_alloc_valid((void*) load_str_ptrs[load_str_ptrs_size]);
 
-                            for(int n = 0; n < size; n++){
+                            for(int n = 0; n <= size; n++){
                                 load_str_ptrs[load_str_ptrs_size][n] = data[n];
                             }
 
@@ -685,7 +686,7 @@ void loadAllTuples(char path[]){
             }
 
             if (need_not_realloc == 0){ // occurs only if \n not found in inputted line
-                fseek(fp, -new_line_size - 1, SEEK_CUR); // shift fp to start of line
+                fseek(fp, fp_pos_state - fp_pos, SEEK_CUR); // shift fp to start of line
 
                 new_line_size *= 2; // double line size and then expand new_line and data using realloc
                 new_line = (char*)realloc(new_line, new_line_size * sizeof(char));
@@ -694,6 +695,9 @@ void loadAllTuples(char path[]){
                 ptr_alloc_valid((void*)data);
             }
         }
+    }
+    else { // in case fp unable to open i.e. NULL, handle scenario
+        puts("TUPLE_LOAD_ERROR: Unable to open file at specified location.\n");
     }
 
     fclose(fp);
