@@ -239,158 +239,211 @@ void showTuple(tuple_t* tuple_ptr){
 
     if (tuple_ptr != NULL){
 
-        /* The following series of switches simply defines formatting for each data type, depending on if the element is
-         * in the first, middle, or last position relative to the tuple. */
+        // handling case when tuple contains a single element only
+        if(tuple_ptr->next == 1){
 
-        switch(tuple_ptr->data.type){
-            case d: printf("(%d,", tuple_ptr->data.val.d);
-                break;
-
-            case u: printf("(%u,", tuple_ptr->data.val.u);
-                break;
-
-            case hi: printf("(%hi,", tuple_ptr->data.val.hi);
-                break;
-
-            case hu: printf("(%hu,", tuple_ptr->data.val.hu);
-                break;
-
-            case li: printf("(%li,", tuple_ptr->data.val.li);
-                break;
-
-            case lu: printf("(%lu,", tuple_ptr->data.val.lu);
-                break;
-
-            case lli: printf("(%lli,", tuple_ptr->data.val.lli);
-                break;
-
-            case llu: printf("(%llu,", tuple_ptr->data.val.llu);
-                break;
-
-            case f: printf("(%f,", tuple_ptr->data.val.f);
-                break;
-
-            case lf: printf("(%lf,", tuple_ptr->data.val.lf);
-                break;
-
-            case Lf: printf("(%Lf,", tuple_ptr->data.val.Lf);
-                break;
-
-            case c: printf("('%c',", tuple_ptr->data.val.c);
-                break;
-
-            case s: printf("('%s',", tuple_ptr->data.val.s);
-                break;
-        } // default case not necessary since .type specifies an enum format
-
-        int last = tuple_ptr->next - 1;
-
-        for (int j = 1; j < last; j++){
-            switch((tuple_ptr + j)->data.type){
-                case d: printf(" %d,", (tuple_ptr + j)->data.val.d);
+            switch(tuple_ptr->data.type){
+                case d: printf("(%d)\n", tuple_ptr->data.val.d);
                     break;
 
-                case u: printf(" %u,", (tuple_ptr + j)->data.val.u);
+                case u: printf("(%u)\n", tuple_ptr->data.val.u);
                     break;
 
-                case hi: printf(" %hi,", (tuple_ptr + j)->data.val.hi);
+                case hi: printf("(%hi)\n", tuple_ptr->data.val.hi);
                     break;
 
-                case hu: printf(" %hu,", (tuple_ptr + j)->data.val.hu);
+                case hu: printf("(%hu)\n", tuple_ptr->data.val.hu);
                     break;
 
-                case li: printf(" %li,", (tuple_ptr + j)->data.val.li);
+                case li: printf("(%li)\n", tuple_ptr->data.val.li);
                     break;
 
-                case lu: printf(" %lu,", (tuple_ptr + j)->data.val.lu);
+                case lu: printf("(%lu)\n", tuple_ptr->data.val.lu);
                     break;
 
-                case lli: printf(" %lli,", (tuple_ptr + j)->data.val.lli);
+                case lli: printf("(%lli)\n", tuple_ptr->data.val.lli);
                     break;
 
-                case llu: printf(" %llu,", (tuple_ptr + j)->data.val.llu);
+                case llu: printf("(%llu)\n", tuple_ptr->data.val.llu);
                     break;
 
-                case f: printf(" %f,", (tuple_ptr + j)->data.val.f);
+                case f: printf("(%f)\n", tuple_ptr->data.val.f);
                     break;
 
-                case lf: printf(" %lf,", (tuple_ptr + j)->data.val.lf);
+                case lf: printf("(%lf)\n", tuple_ptr->data.val.lf);
                     break;
 
-                case Lf: printf(" %Lf,", (tuple_ptr + j)->data.val.Lf);
+                case Lf: printf("(%Lf)\n", tuple_ptr->data.val.Lf);
                     break;
 
-                case c: printf(" '%c',", (tuple_ptr + j)->data.val.c);
+                case c: printf("('%c')\n", tuple_ptr->data.val.c);
                     break;
 
-                case s: printf(" '%s',", (tuple_ptr + j)->data.val.s);
+                case s: printf("('%s')\n", tuple_ptr->data.val.s);
+                    break;
+            } // default case not necessary since .type specifies an enum format
+        }
+        else{
+
+            /* The following series of switches simply defines formatting for each data type, depending on if the element is
+             * in the first, middle, or last position relative to the tuple. */
+
+            switch(tuple_ptr->data.type){
+                case d: printf("(%d,", tuple_ptr->data.val.d);
+                    break;
+
+                case u: printf("(%u,", tuple_ptr->data.val.u);
+                    break;
+
+                case hi: printf("(%hi,", tuple_ptr->data.val.hi);
+                    break;
+
+                case hu: printf("(%hu,", tuple_ptr->data.val.hu);
+                    break;
+
+                case li: printf("(%li,", tuple_ptr->data.val.li);
+                    break;
+
+                case lu: printf("(%lu,", tuple_ptr->data.val.lu);
+                    break;
+
+                case lli: printf("(%lli,", tuple_ptr->data.val.lli);
+                    break;
+
+                case llu: printf("(%llu,", tuple_ptr->data.val.llu);
+                    break;
+
+                case f: printf("(%f,", tuple_ptr->data.val.f);
+                    break;
+
+                case lf: printf("(%lf,", tuple_ptr->data.val.lf);
+                    break;
+
+                case Lf: printf("(%Lf,", tuple_ptr->data.val.Lf);
+                    break;
+
+                case c: printf("('%c',", tuple_ptr->data.val.c);
+                    break;
+
+                case s: printf("('%s',", tuple_ptr->data.val.s);
+                    break;
+            } // default case not necessary since .type specifies an enum format
+
+            int last = tuple_ptr->next - 1;
+
+            for (int j = 1; j < last; j++){
+                switch((tuple_ptr + j)->data.type){
+                    case d: printf(" %d,", (tuple_ptr + j)->data.val.d);
+                        break;
+
+                    case u: printf(" %u,", (tuple_ptr + j)->data.val.u);
+                        break;
+
+                    case hi: printf(" %hi,", (tuple_ptr + j)->data.val.hi);
+                        break;
+
+                    case hu: printf(" %hu,", (tuple_ptr + j)->data.val.hu);
+                        break;
+
+                    case li: printf(" %li,", (tuple_ptr + j)->data.val.li);
+                        break;
+
+                    case lu: printf(" %lu,", (tuple_ptr + j)->data.val.lu);
+                        break;
+
+                    case lli: printf(" %lli,", (tuple_ptr + j)->data.val.lli);
+                        break;
+
+                    case llu: printf(" %llu,", (tuple_ptr + j)->data.val.llu);
+                        break;
+
+                    case f: printf(" %f,", (tuple_ptr + j)->data.val.f);
+                        break;
+
+                    case lf: printf(" %lf,", (tuple_ptr + j)->data.val.lf);
+                        break;
+
+                    case Lf: printf(" %Lf,", (tuple_ptr + j)->data.val.Lf);
+                        break;
+
+                    case c: printf(" '%c',", (tuple_ptr + j)->data.val.c);
+                        break;
+
+                    case s: printf(" '%s',", (tuple_ptr + j)->data.val.s);
+                        break;
+                } // default case not necessary since .type specifies an enum format
+            }
+
+            switch((tuple_ptr + last)->data.type){
+                case d: printf(" %d)\n", (tuple_ptr + last)->data.val.d);
+                    break;
+
+                case u: printf(" %u)\n", (tuple_ptr + last)->data.val.u);
+                    break;
+
+                case hi: printf(" %hi)\n", (tuple_ptr + last)->data.val.hi);
+                    break;
+
+                case hu: printf(" %hu)\n", (tuple_ptr + last)->data.val.hu);
+                    break;
+
+                case li: printf(" %li)\n", (tuple_ptr + last)->data.val.li);
+                    break;
+
+                case lu: printf(" %lu)\n", (tuple_ptr + last)->data.val.lu);
+                    break;
+
+                case lli: printf(" %lli)\n", (tuple_ptr + last)->data.val.lli);
+                    break;
+
+                case llu: printf(" %llu)\n", (tuple_ptr + last)->data.val.llu);
+                    break;
+
+                case f: printf(" %f)\n", (tuple_ptr + last)->data.val.f);
+                    break;
+
+                case lf: printf(" %lf)\n", (tuple_ptr + last)->data.val.lf);
+                    break;
+
+                case Lf: printf(" %Lf)\n", (tuple_ptr + last)->data.val.Lf);
+                    break;
+
+                case c: printf(" '%c')\n", (tuple_ptr + last)->data.val.c);
+                    break;
+
+                case s: printf(" '%s')\n", (tuple_ptr + last)->data.val.s);
                     break;
             } // default case not necessary since .type specifies an enum format
         }
 
-        switch((tuple_ptr + last)->data.type){
-            case d: printf(" %d)", (tuple_ptr + last)->data.val.d);
-                break;
-
-            case u: printf(" %u)", (tuple_ptr + last)->data.val.u);
-                break;
-
-            case hi: printf(" %hi)", (tuple_ptr + last)->data.val.hi);
-                break;
-
-            case hu: printf(" %hu)", (tuple_ptr + last)->data.val.hu);
-                break;
-
-            case li: printf(" %li)", (tuple_ptr + last)->data.val.li);
-                break;
-
-            case lu: printf(" %lu)", (tuple_ptr + last)->data.val.lu);
-                break;
-
-            case lli: printf(" %lli)", (tuple_ptr + last)->data.val.lli);
-                break;
-
-            case llu: printf(" %llu)", (tuple_ptr + last)->data.val.llu);
-                break;
-
-            case f: printf(" %f)", (tuple_ptr + last)->data.val.f);
-                break;
-
-            case lf: printf(" %lf)", (tuple_ptr + last)->data.val.lf);
-                break;
-
-            case Lf: printf(" %Lf)", (tuple_ptr + last)->data.val.Lf);
-                break;
-
-            case c: printf(" '%c')", (tuple_ptr + last)->data.val.c);
-                break;
-
-            case s: printf(" '%s')", (tuple_ptr + last)->data.val.s);
-                break;
-        } // default case not necessary since .type specifies an enum format
     }
     else{
         printf("TUPLE_SHOW_ERROR: Tuple pointer specified is NULL.\n");
     }
 }
 
+/* Simple function to carry out comparisons between tuples of that are compatible. Tuples are compatible if they have
+ * the same size on the 0th dimension, and have pair-wise matching types. Integer 0 is returned if tuples match. If they
+ * mismatch, a positive integer is returned if left is greater then right, otherwise a negative integer is returned. For
+ * the mismatch case, the absolute of the return is equal to the position of first mismatch. If the return is INT_MAX,
+ * an error has occured.*/
 int cmpTuples(char id_1[VAR_NAME_SIZE], char id_2[VAR_NAME_SIZE]){
 
     tuple_t* tuple_ptr_1 = getTupleByID(id_1);
     tuple_t* tuple_ptr_2 = getTupleByID(id_2);
 
-    int cmp_ret = INT_MAX;
+    int cmp_ret = INT_MAX; //set to INT_MAX, to be used as error code
 
     if(tuple_ptr_1 == NULL || tuple_ptr_2 == NULL){
         printf("TUPLE_COMPARE_ERROR: At least one of the passed identifiers is not associated with a tuple.\n");
     }
-    else if(tuple_ptr_1->next != tuple_ptr_2->next){
+    else if(tuple_ptr_1->next != tuple_ptr_2->next){ // check for dimensionality match
         printf("TUPLE_COMPARE_ERROR: Tuple dimensions do not match and thus tuples are not compatible.\n");
     }
     else{
         int match = 1;
 
-        for(int j = 0; j < tuple_ptr_1->next; j++){
+        for(int j = 0; j < tuple_ptr_1->next; j++){ // check for type mismatch
             if((tuple_ptr_1 + j)->data.type != (tuple_ptr_2 + j)->data.type){
                 match = 0;
                 break;
@@ -404,6 +457,7 @@ int cmpTuples(char id_1[VAR_NAME_SIZE], char id_2[VAR_NAME_SIZE]){
             cmp_ret = 0;
             int ret_strcmp;
 
+            // carry out data comparisons based on type, calling any necessary functions as needed
             for(int j = 0; j < tuple_ptr_1->next; j++){
                 switch((tuple_ptr_1 + j)->data.type){
                     case d: cmp_ret = int_types_cmp((tuple_ptr_1 + j)->data.val.d, (tuple_ptr_2 + j)->data.val.d, j);
@@ -554,10 +608,11 @@ void loadAllTuples(char path[]){
 
     FILE *fp;
     fp = fopen(path, "r"); // specify read mode only
-    long int fp_pos;
-    long int fp_pos_state = ftell(fp);
 
     if(fp != NULL){
+        long int fp_pos;
+        long int fp_pos_state = ftell(fp);
+
         while(!feof(fp)){ // loop until end of file reached
             need_not_realloc = 0;
             load_str_ptrs_size = 0;
@@ -596,7 +651,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.d = fetch_long_int;
                             } // check to see if return long int is in fact in int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -608,7 +664,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.u = fetch_long_int;
                             } // check to see if return long int is in fact in unsigned int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unsigned int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unsigned int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -620,7 +677,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.hi = fetch_long_int;
                             } // check to see if return long int is in fact in short int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (short int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(short int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -632,7 +690,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.hu = fetch_long_int;
                             } // check to see if return long int is in fact in unsigned short int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unsigned short int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unsigned short int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -644,7 +703,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.li = fetch_long_int;
                             } // check to see if return long int is in fact in long int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (long int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(long int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -656,7 +716,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.lu = fetch_long_int;
                             } // check to see if return long int is in fact in unsigned long int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unsigned long int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unsigned long int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -668,7 +729,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.lli = fetch_long_long_int;
                             } // check to see if return long long int is in fact in long long int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (long long int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(long long int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -680,7 +742,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.llu = fetch_long_long_int;
                             } // check to see if return long long int is in fact in unsigned long long int range
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unsigned long long int range out of bounds).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unsigned long long int range out of bounds).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -692,7 +755,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.f = fetch_float;
                             }
                             else{
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unable to cast float from input string).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unable to cast float from input string).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -704,7 +768,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.lf = fetch_double;
                             }
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unable to cast double from input string).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unable to cast double from input string).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -716,7 +781,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.Lf = fetch_long_double;
                             }
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (unable to cast long double from input string).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(unable to cast long double from input string).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -727,7 +793,8 @@ void loadAllTuples(char path[]){
                                 read_store[k].val.c = data[0];
                             }
                             else{ // graceful close
-                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type (char array detected when one char expected).\n");
+                                printf("TUPLE_LOAD_ERROR: Incompatibility in fetched data and corresponding type "
+                                       "(char array detected when one char expected).\n");
                                 saveAllTuples("tuple_load_error_SAVE.txt");
                                 exit(EXIT_FAILURE);
                             }
@@ -796,6 +863,7 @@ void loadAllTuples(char path[]){
     free(read_store);
 }
 
+// function used for integer comparisons in tuples
 int int_types_cmp(long long int num1, long long int num2, int shift){
 
     int cmp_ret = 0;
@@ -810,6 +878,7 @@ int int_types_cmp(long long int num1, long long int num2, int shift){
     return cmp_ret;
 }
 
+// function used for unsigned integer comparisons in tuples
 int uint_types_cmp(unsigned long long int num1, unsigned long long int num2, int shift){
 
     int cmp_ret = 0;
@@ -824,6 +893,7 @@ int uint_types_cmp(unsigned long long int num1, unsigned long long int num2, int
     return cmp_ret;
 }
 
+// function used for float comparisons in tuples
 int float_types_cmp(long double num1, long double num2, int shift){
 
     int cmp_ret = 0;
@@ -844,6 +914,7 @@ void ptr_alloc_valid(void *ptr) {
 
     if (ptr == NULL) {
         printf("TUPLE_ALLOCATION_FAILURE: Memory allocation failed for array during either initial malloc or subsequent realloc.\n");
-        exit(EXIT_FAILURE);
+        saveAllTuples("tuple_load_error_SAVE.txt");
+        exit(EXIT_FAILURE); // graceful close
     }
 }

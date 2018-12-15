@@ -3,9 +3,8 @@ project(tuple_t C)
 
 set(CMAKE_C_STANDARD 99)
 
-set(tuple_t tuple_t.c tuples_t.h)
-add_library(tuples_t SHARED ${tuple_t})
+set(tuple_t_source tuple_t.c tuples_t.h)
+add_library(tuple_t SHARED ${tuple_t_source})
 
-set(test_driver test_driver.c)
-add_executable(test_driver ${test_driver})
+add_executable(test_driver test_driver.c)
 target_link_libraries(test_driver tuple_t)
