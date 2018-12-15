@@ -18,20 +18,6 @@ int main() {
     str_ptrs = (char**)malloc(0); // malloc array of str_ptrs structs
     ptr_alloc_valid((void*) str_ptrs);
 
-    tagged_union test_1[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 1"}};
-    tagged_union test_2[2] = {{.type = d, .val.d = 10}, {.type = s, .val.s = "String 2"}};
-
-    createTuple("abc 123", &test_1, 2);
-    createTuple("efg", &test_2, 2);
-    printf("%d\n", cmpTuples("abc 123", "efg"));
-    deleteTuple("efg");
-    //joinTuple("xyz", getTupleByID("efg"), getTupleByID("abc"));
-
-    saveAllTuples("/Users/xandrumifsud/Desktop/test.txt");
-    deleteTuple("abc 123");
-    loadAllTuples("/Users/xandrumifsud/Desktop/test.txt");
-    showTuple(getTupleByID("abc 123"));
-
     return 0;
 }
 
