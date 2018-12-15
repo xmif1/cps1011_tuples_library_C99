@@ -239,184 +239,170 @@ void showTuple(tuple_t* tuple_ptr){
 
     if (tuple_ptr != NULL){
 
-        // handling case when tuple contains a single element only
-        if(tuple_ptr->next == 1){
+        /* The following series of switches simply defines formatting for each data type, depending on if the element is
+         * in the first, middle, or last position relative to the tuple. */
 
-            switch(tuple_ptr->data.type){
-                case d: printf("(%d)\n", tuple_ptr->data.val.d);
-                    break;
+        switch(tuple_ptr->data.type){
+            case d: printf("(%d", tuple_ptr->data.val.d);
+                break;
 
-                case u: printf("(%u)\n", tuple_ptr->data.val.u);
-                    break;
+            case u: printf("(%u", tuple_ptr->data.val.u);
+                break;
 
-                case hi: printf("(%hi)\n", tuple_ptr->data.val.hi);
-                    break;
+            case hi: printf("(%hi", tuple_ptr->data.val.hi);
+                break;
 
-                case hu: printf("(%hu)\n", tuple_ptr->data.val.hu);
-                    break;
+            case hu: printf("(%hu", tuple_ptr->data.val.hu);
+                break;
 
-                case li: printf("(%li)\n", tuple_ptr->data.val.li);
-                    break;
+            case li: printf("(%li", tuple_ptr->data.val.li);
+                break;
 
-                case lu: printf("(%lu)\n", tuple_ptr->data.val.lu);
-                    break;
+            case lu: printf("(%lu", tuple_ptr->data.val.lu);
+                break;
 
-                case lli: printf("(%lli)\n", tuple_ptr->data.val.lli);
-                    break;
+            case lli: printf("(%lli", tuple_ptr->data.val.lli);
+                break;
 
-                case llu: printf("(%llu)\n", tuple_ptr->data.val.llu);
-                    break;
+            case llu: printf("(%llu", tuple_ptr->data.val.llu);
+                break;
 
-                case f: printf("(%f)\n", tuple_ptr->data.val.f);
-                    break;
+            case f: printf("(%f", tuple_ptr->data.val.f);
+                break;
 
-                case lf: printf("(%lf)\n", tuple_ptr->data.val.lf);
-                    break;
+            case lf: printf("(%lf", tuple_ptr->data.val.lf);
+                break;
 
-                case Lf: printf("(%Lf)\n", tuple_ptr->data.val.Lf);
-                    break;
+            case Lf: printf("(%Lf", tuple_ptr->data.val.Lf);
+                break;
 
-                case c: printf("('%c')\n", tuple_ptr->data.val.c);
-                    break;
+            case c: printf("('%c'", tuple_ptr->data.val.c);
+                break;
 
-                case s: printf("('%s')\n", tuple_ptr->data.val.s);
-                    break;
-            } // default case not necessary since .type specifies an enum format
+            case s: printf("('%s'", tuple_ptr->data.val.s);
+                break;
+        } // default case not necessary since .type specifies an enum format
+
+        int last = tuple_ptr->next - 1;
+
+        if (last == 0){ // handling case that tuple has a single element
+            printf(")");
         }
-        else{
+        else {
+            printf(",");
 
-            /* The following series of switches simply defines formatting for each data type, depending on if the element is
-             * in the first, middle, or last position relative to the tuple. */
-
-            switch(tuple_ptr->data.type){
-                case d: printf("(%d,", tuple_ptr->data.val.d);
-                    break;
-
-                case u: printf("(%u,", tuple_ptr->data.val.u);
-                    break;
-
-                case hi: printf("(%hi,", tuple_ptr->data.val.hi);
-                    break;
-
-                case hu: printf("(%hu,", tuple_ptr->data.val.hu);
-                    break;
-
-                case li: printf("(%li,", tuple_ptr->data.val.li);
-                    break;
-
-                case lu: printf("(%lu,", tuple_ptr->data.val.lu);
-                    break;
-
-                case lli: printf("(%lli,", tuple_ptr->data.val.lli);
-                    break;
-
-                case llu: printf("(%llu,", tuple_ptr->data.val.llu);
-                    break;
-
-                case f: printf("(%f,", tuple_ptr->data.val.f);
-                    break;
-
-                case lf: printf("(%lf,", tuple_ptr->data.val.lf);
-                    break;
-
-                case Lf: printf("(%Lf,", tuple_ptr->data.val.Lf);
-                    break;
-
-                case c: printf("('%c',", tuple_ptr->data.val.c);
-                    break;
-
-                case s: printf("('%s',", tuple_ptr->data.val.s);
-                    break;
-            } // default case not necessary since .type specifies an enum format
-
-            int last = tuple_ptr->next - 1;
-
-            for (int j = 1; j < last; j++){
-                switch((tuple_ptr + j)->data.type){
-                    case d: printf(" %d,", (tuple_ptr + j)->data.val.d);
+            for (int j = 1; j < last; j++) {
+                switch ((tuple_ptr + j)->data.type) {
+                    case d:
+                        printf(" %d,", (tuple_ptr + j)->data.val.d);
                         break;
 
-                    case u: printf(" %u,", (tuple_ptr + j)->data.val.u);
+                    case u:
+                        printf(" %u,", (tuple_ptr + j)->data.val.u);
                         break;
 
-                    case hi: printf(" %hi,", (tuple_ptr + j)->data.val.hi);
+                    case hi:
+                        printf(" %hi,", (tuple_ptr + j)->data.val.hi);
                         break;
 
-                    case hu: printf(" %hu,", (tuple_ptr + j)->data.val.hu);
+                    case hu:
+                        printf(" %hu,", (tuple_ptr + j)->data.val.hu);
                         break;
 
-                    case li: printf(" %li,", (tuple_ptr + j)->data.val.li);
+                    case li:
+                        printf(" %li,", (tuple_ptr + j)->data.val.li);
                         break;
 
-                    case lu: printf(" %lu,", (tuple_ptr + j)->data.val.lu);
+                    case lu:
+                        printf(" %lu,", (tuple_ptr + j)->data.val.lu);
                         break;
 
-                    case lli: printf(" %lli,", (tuple_ptr + j)->data.val.lli);
+                    case lli:
+                        printf(" %lli,", (tuple_ptr + j)->data.val.lli);
                         break;
 
-                    case llu: printf(" %llu,", (tuple_ptr + j)->data.val.llu);
+                    case llu:
+                        printf(" %llu,", (tuple_ptr + j)->data.val.llu);
                         break;
 
-                    case f: printf(" %f,", (tuple_ptr + j)->data.val.f);
+                    case f:
+                        printf(" %f,", (tuple_ptr + j)->data.val.f);
                         break;
 
-                    case lf: printf(" %lf,", (tuple_ptr + j)->data.val.lf);
+                    case lf:
+                        printf(" %lf,", (tuple_ptr + j)->data.val.lf);
                         break;
 
-                    case Lf: printf(" %Lf,", (tuple_ptr + j)->data.val.Lf);
+                    case Lf:
+                        printf(" %Lf,", (tuple_ptr + j)->data.val.Lf);
                         break;
 
-                    case c: printf(" '%c',", (tuple_ptr + j)->data.val.c);
+                    case c:
+                        printf(" '%c',", (tuple_ptr + j)->data.val.c);
                         break;
 
-                    case s: printf(" '%s',", (tuple_ptr + j)->data.val.s);
+                    case s:
+                        printf(" '%s',", (tuple_ptr + j)->data.val.s);
                         break;
                 } // default case not necessary since .type specifies an enum format
             }
 
-            switch((tuple_ptr + last)->data.type){
-                case d: printf(" %d)\n", (tuple_ptr + last)->data.val.d);
+            switch ((tuple_ptr + last)->data.type) {
+                case d:
+                    printf(" %d)\n", (tuple_ptr + last)->data.val.d);
                     break;
 
-                case u: printf(" %u)\n", (tuple_ptr + last)->data.val.u);
+                case u:
+                    printf(" %u)\n", (tuple_ptr + last)->data.val.u);
                     break;
 
-                case hi: printf(" %hi)\n", (tuple_ptr + last)->data.val.hi);
+                case hi:
+                    printf(" %hi)\n", (tuple_ptr + last)->data.val.hi);
                     break;
 
-                case hu: printf(" %hu)\n", (tuple_ptr + last)->data.val.hu);
+                case hu:
+                    printf(" %hu)\n", (tuple_ptr + last)->data.val.hu);
                     break;
 
-                case li: printf(" %li)\n", (tuple_ptr + last)->data.val.li);
+                case li:
+                    printf(" %li)\n", (tuple_ptr + last)->data.val.li);
                     break;
 
-                case lu: printf(" %lu)\n", (tuple_ptr + last)->data.val.lu);
+                case lu:
+                    printf(" %lu)\n", (tuple_ptr + last)->data.val.lu);
                     break;
 
-                case lli: printf(" %lli)\n", (tuple_ptr + last)->data.val.lli);
+                case lli:
+                    printf(" %lli)\n", (tuple_ptr + last)->data.val.lli);
                     break;
 
-                case llu: printf(" %llu)\n", (tuple_ptr + last)->data.val.llu);
+                case llu:
+                    printf(" %llu)\n", (tuple_ptr + last)->data.val.llu);
                     break;
 
-                case f: printf(" %f)\n", (tuple_ptr + last)->data.val.f);
+                case f:
+                    printf(" %f)\n", (tuple_ptr + last)->data.val.f);
                     break;
 
-                case lf: printf(" %lf)\n", (tuple_ptr + last)->data.val.lf);
+                case lf:
+                    printf(" %lf)\n", (tuple_ptr + last)->data.val.lf);
                     break;
 
-                case Lf: printf(" %Lf)\n", (tuple_ptr + last)->data.val.Lf);
+                case Lf:
+                    printf(" %Lf)\n", (tuple_ptr + last)->data.val.Lf);
                     break;
 
-                case c: printf(" '%c')\n", (tuple_ptr + last)->data.val.c);
+                case c:
+                    printf(" '%c')\n", (tuple_ptr + last)->data.val.c);
                     break;
 
-                case s: printf(" '%s')\n", (tuple_ptr + last)->data.val.s);
+                case s:
+                    printf(" '%s')\n", (tuple_ptr + last)->data.val.s);
                     break;
             } // default case not necessary since .type specifies an enum format
         }
-
     }
+
     else{
         printf("TUPLE_SHOW_ERROR: Tuple pointer specified is NULL.\n");
     }
